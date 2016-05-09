@@ -25,8 +25,9 @@
     return module.data.exports;
   }
 
-  function use(name) {
-    require(name);
+  function use(names) {
+    if (!Array.isArray(names)) names = [names];
+    names.forEach(require);
   }
 
   var modules = {};
