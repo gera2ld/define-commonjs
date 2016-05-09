@@ -20,6 +20,7 @@
       throw 'Module not found: ' + name;
     }
     if (!module.initialized) {
+      module.initialized = true;
       module.factory(require, module.data.exports, module.data);
     }
     return module.data.exports;
