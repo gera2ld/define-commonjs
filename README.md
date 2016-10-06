@@ -52,7 +52,7 @@ console.log(a + ', ' + b);
 
 Using gulp:
 ``` js
-const pack = require('define/pack/gulp');
+const pack = require('define-commonjs/pack/gulp');
 const concat = require('gulp-concat');
 
 gulp.task('pack', () => {
