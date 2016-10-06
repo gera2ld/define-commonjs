@@ -1,7 +1,11 @@
-define.js
+define-commonjs
 ===
 
-This is a super lite CommonJS implementation.
+![NPM](https://img.shields.io/npm/v/define-commonjs.svg)
+![Licence](https://img.shields.io/npm/l/define-commonjs.svg)
+![Downloads](https://img.shields.io/npm/dt/define-commonjs.svg)
+
+This is yet another CommonJS implementation.
 
 Usage
 ---
@@ -11,9 +15,9 @@ Usage
 ```
 
 ``` js
-// bundle.js
+// bundle.js is like this
 define('a', function (require, exports, module) {
-  module.exports = 'Hello';
+  module.exports = 'hello';
 });
 
 define('b', function (require, exports, module) {
@@ -23,7 +27,7 @@ define('b', function (require, exports, module) {
 define('app', function (require, exports, module) {
   var a = require('a');
   var b = require('b');
-  console.log(a + ' ' + b + '!');
+  console.log(a + ', ' + b);
 });
 
 define.use('app');
@@ -31,6 +35,21 @@ define.use('app');
 
 Packing
 ---
+Assume we have a project with three files:
+
+``` js
+// src/a.js
+module.exports = 'hello';
+
+// src/b.js
+module.exports = 'world';
+
+// src/app.js
+var a = require('./a');
+var b = require('./b');
+console.log(a + ', ' + b);
+```
+
 Using gulp:
 ``` js
 const pack = require('define/pack/gulp');
@@ -38,7 +57,7 @@ const concat = require('gulp-concat');
 
 gulp.task('pack', () => {
   const collect = pack();
-  return gulp.src('src/**/*.js')
+  return gulp.src('src/*.js')
   .pipe(collect)
   .pipe(collect.pack('src/app.js'))
   .pipe(concat())
@@ -47,9 +66,10 @@ gulp.task('pack', () => {
 
 gulp.task('pack-with-custom-paths', () => {
   const collect = pack();
-  return gulp.src('src/**/*.js')
+  return gulp.src('src/*.js')
   .pipe(collect)
   .pipe(collect.pack('src/app.js', file => {
+    // This is useful if we have changed files before packing, e.g. concat'ed.
     return file.relative === 'main.js' ? 'src/app.js' : file.path;
   }))
   .pipe(concat())

@@ -1,5 +1,5 @@
 {
-  "name": "define",
+  "name": "define-commonjs",
   "version": "0.0.0",
   "description": "Yet another CommonJS implementation",
   "main": "define.js",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gera2ld/define.git"
+    "url": "git+https://github.com/gera2ld/define-commonjs.git"
   },
   "keywords": [
     "cjs",
@@ -22,7 +22,7 @@
   "author": "Gerald <i@gerald.top>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/gera2ld/define/issues"
+    "url": "https://github.com/gera2ld/define-commonjs/issues"
   },
-  "homepage": "https://github.com/gera2ld/define#readme"
+  "homepage": "https://github.com/gera2ld/define-commonjs#readme"
 }
