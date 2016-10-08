@@ -35,7 +35,7 @@ function resolveFile(file, options) {
   return stat(file)
   .then(res => {
     if (res.isFile()) return file;
-    if (res.isDirectory() && options.tryDir) return resolveFile(`${file}/index`, {tryDir: false});
+    if (res.isDirectory() && options.tryDir) return resolveFile(path.join(file, 'index'), {tryDir: false});
     return Promise.reject();
   }, err => options.ext.reduce((res, ext) => res.catch(() => {
     const filepath = file + ext;
