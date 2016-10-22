@@ -2,7 +2,7 @@ define-commonjs
 ===
 
 ![NPM](https://img.shields.io/npm/v/define-commonjs.svg)
-![Licence](https://img.shields.io/npm/l/define-commonjs.svg)
+![License](https://img.shields.io/npm/l/define-commonjs.svg)
 ![Downloads](https://img.shields.io/npm/dt/define-commonjs.svg)
 
 This is yet another CommonJS implementation.
@@ -11,6 +11,10 @@ Usage
 ---
 ``` html
 <script src="define.js"></script>
+
+<!-- Add define-async.js only if define.async is needed -->
+<script src="define-async.js"></script>
+
 <script src="bundle.js"></script>
 ```
 
@@ -28,6 +32,13 @@ define('app', function (require, exports, module) {
   var a = require('a');
   var b = require('b');
   console.log(a + ', ' + b);
+});
+
+// define a dependency asynchronously, needs define-async.js
+define.async('async/a', 'http://script/to/a.js');
+define.async('async/b', function () {
+  // should resolve the script code
+  return getCodeFromSomewhereElse();
 });
 
 define.use('app');
