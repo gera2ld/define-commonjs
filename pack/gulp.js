@@ -3,16 +3,18 @@ const gutil = require('gulp-util');
 const through = require('through2');
 const pack = require('.');
 
-function packPlugin(deps, main, getPath) {
+function packPlugin(deps, options) {
   function bufferContents(file, enc, cb) {
     if (file.isNull()) return cb();
     if (file.isStream()) return this.emit('error', new gutil.PluginError('define.js', 'Stream is not supported.'));
+    const {getPath} = options;
     const filepath = getPath && getPath(file) || file.path;
-    file.contents = new Buffer(pack.wrap(deps, String(file.contents), filepath));
+    file.contents = new Buffer(pack.wrap(deps, String(file.contents), filepath, options));
     cb(null, file);
   }
 
   function endStream(cb) {
+    let {main} = options;
     if (main) {
       if (typeof main === 'string') main = {
         path: main,
@@ -42,7 +44,7 @@ function collectPlugin(options) {
     Promise.all(items)
     .then(collection => pack.loadDeps(collection, options))
     .then(deps => {
-      this.pack = (...args) => packPlugin(deps, ...args);
+      this.pack = packOptions => packPlugin(deps, Object.assign({}, options, packOptions));
       cb();
     })
     .catch(err => {

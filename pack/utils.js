@@ -8,7 +8,10 @@ function promisify(func, ...partialArgs) {
   });
 }
 
-function resolvePath(filepath, options) {
+function resolvePath(filepath, base, options) {
+  if (base && /^\.\.?(\/|$)/.test(filepath)) {
+    filepath = path.join(base, filepath);
+  }
   filepath = path.normalize(filepath).replace(/\\/g, '/');
   if (path.isAbsolute(filepath)) return filepath;
   options && options.alias && Object.keys(options.alias).some(key => {

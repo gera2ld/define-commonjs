@@ -5,9 +5,9 @@ const stat = promisify(fs.stat);
 const glob = require('glob');
 const globPromise = promisify(glob);
 
-function getRERequireRelative() {
+function getRERequire() {
   // return a new RegExp every time
-  return /\brequire\(['"](\.[^'"]*)['"]\)/g;
+  return /\brequire\(['"]([^'"]*)['"]\)/g;
 }
 
 function mergeListMap(...maps) {
@@ -51,16 +51,16 @@ const defaultOptions = {
 };
 
 function collect(content, filepath, options) {
-  const fullpath = resolvePath(filepath, options);
+  const fullpath = resolvePath(filepath, null, options);
   const dir = path.dirname(filepath);
-  const re = getRERequireRelative();
+  const re = getRERequire();
   const depMap = {};
   const list = depMap[fullpath] = depMap[fullpath] || [];
   list.push({
     filepath,
   });
   for (let m; m = re.exec(content);) {
-    const fullpath = resolvePath(path.join(dir, m[1]), options);
+    const fullpath = resolvePath(m[1], dir, options);
     const list = depMap[fullpath] = depMap[fullpath] || [];;
     list.push({
       filepath,
@@ -102,19 +102,19 @@ ${depMap[dep].map(item => '- ' + item.filepath).join('\n')}`);
   });
 }
 
-function getModuleId(deps, ...paths) {
-  const dep = path.resolve(...paths);
+function getModuleId(deps, filepath, base) {
+  const dep = resolvePath(filepath, base);
   const name = deps.nameMap[dep] || dep;
   const item = deps.dataMap[name];
   if (!item) throw new Error(`Dependency not found: ${dep}`);
   return item.id;
 }
 
-function wrap(deps, content, filepath) {
-  const re = getRERequireRelative();
+function wrap(deps, content, filepath, options) {
+  const re = getRERequire();
   const id = getModuleId(deps, filepath);
   const dirname = path.dirname(filepath);
-  content = content.replace(re, (m, dep) => `require(${JSON.stringify(getModuleId(deps, dirname, dep))})`);
+  content = content.replace(re, (m, dep) => `require(${JSON.stringify(getModuleId(deps, dep, dirname))})`);
   return `\
 define(${JSON.stringify(id)}, function (require, exports, module) {
 ${content}
