@@ -1,14 +1,9 @@
 const fs = require('fs');
 const path = require('path');
+const {promisify, resolvePath} = require('./utils');
+const stat = promisify(fs.stat);
 const glob = require('glob');
-
-function promisify(func, ...partialArgs) {
-  return (...args) => new Promise((resolve, reject) => {
-    func(...args, ...partialArgs, (err, data) => {
-      err ? reject(err) : resolve(data);
-    });
-  });
-}
+const globPromise = promisify(glob);
 
 function getRERequireRelative() {
   // return a new RegExp every time
@@ -31,11 +26,15 @@ function mergeListMap(...maps) {
 }
 
 function resolveFile(file, options) {
-  options = Object.assign(Object.create(resolveFile.options), options);
   return stat(file)
   .then(res => {
     if (res.isFile()) return file;
-    if (res.isDirectory() && options.tryDir) return resolveFile(path.join(file, 'index'), {tryDir: false});
+    if (res.isDirectory() && options.tryDir) {
+      return resolveFile(
+        path.join(file, 'index'),
+        Object.assign({}, options, {tryDir: false})
+      );
+    }
     return Promise.reject();
   }, err => options.ext.reduce((res, ext) => res.catch(() => {
     const filepath = file + ext;
@@ -45,13 +44,14 @@ function resolveFile(file, options) {
     throw file;
   });
 }
-resolveFile.options = {
+
+const defaultOptions = {
   tryDir: true,
   ext: ['.js'],
 };
 
-function collectOne(content, filepath) {
-  const fullpath = path.resolve(filepath);
+function collect(content, filepath, options) {
+  const fullpath = resolvePath(filepath, options);
   const dir = path.dirname(filepath);
   const re = getRERequireRelative();
   const depMap = {};
@@ -59,9 +59,8 @@ function collectOne(content, filepath) {
   list.push({
     filepath,
   });
-  let m;
-  while (m = re.exec(content)) {
-    const fullpath = path.resolve(dir, m[1]);
+  for (let m; m = re.exec(content);) {
+    const fullpath = resolvePath(path.join(dir, m[1]), options);
     const list = depMap[fullpath] = depMap[fullpath] || [];;
     list.push({
       filepath,
@@ -70,11 +69,11 @@ function collectOne(content, filepath) {
   return depMap;
 }
 
-function loadDeps(collection) {
+function loadDeps(collection, options) {
   const depMap = mergeListMap(collection);
   return Promise.all(Object.keys(depMap).map(key => {
     const data = depMap[key];
-    return resolveFile(key)
+    return resolveFile(key, defaultOptions)
     .then(fullpath => ({key, fullpath, data}));
   }))
   .catch(dep => {
@@ -103,12 +102,6 @@ ${depMap[dep].map(item => '- ' + item.filepath).join('\n')}`);
   });
 }
 
-function collect(files) {
-  return Promise.all(files.map(file => (
-    readFile(file).then(content => collectOne(content, file))
-  ))).then(loadDeps);
-}
-
 function getModuleId(deps, ...paths) {
   const dep = path.resolve(...paths);
   const name = deps.nameMap[dep] || dep;
@@ -134,22 +127,13 @@ function use(deps, ...filepaths) {
   return `define.use(${JSON.stringify(ids)});\n`;
 }
 
-const getFiles = (glob => {
-  return function (pattern, options={}) {
-    options.nodir = true;
-    return glob(pattern, options);
-  };
-})(promisify(glob));
-
-const readFile = promisify(fs.readFile, 'utf8');
-const stat = promisify(fs.stat);
+function getFiles(pattern, options={}) {
+  options.nodir = true;
+  return globPromise(pattern, options);
+}
 
 exports.glob = getFiles;
-exports.collectOne = collectOne;
-exports.loadDeps = loadDeps;
 exports.collect = collect;
+exports.loadDeps = loadDeps;
 exports.wrap = wrap;
 exports.use = use;
-
-// debugging
-exports.readFile = readFile;

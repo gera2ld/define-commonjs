@@ -30,21 +30,25 @@ function packPlugin(deps, main, getPath) {
   return through.obj(bufferContents, endStream);
 }
 
-function collectPlugin() {
+function collectPlugin(options) {
   function bufferContents(file, enc, cb) {
     if (file.isNull()) return cb();
     if (file.isStream()) return this.emit('error', new gutil.PluginError('define.js', 'Stream is not supported.'));
-    items.push(pack.collectOne(String(file.contents), file.path));
+    items.push(pack.collect(String(file.contents), file.path, options));
     cb(null, file);
   }
 
   function endStream(cb) {
     Promise.all(items)
-    .then(pack.loadDeps)
+    .then(collection => pack.loadDeps(collection, options))
     .then(deps => {
       this.pack = (...args) => packPlugin(deps, ...args);
+      cb();
     })
-    .then(() => cb());
+    .catch(err => {
+      console.error(err);
+      throw err;
+    });
   }
 
   const items = [];
