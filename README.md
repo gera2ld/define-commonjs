@@ -70,7 +70,7 @@ gulp.task('pack', () => {
   const collect = pack();
   return gulp.src('src/*.js')
   .pipe(collect)
-  .pipe(collect.pack('src/app.js'))
+  .pipe(collect.pack({main: 'src/app.js'}))
   .pipe(concat())
   .pipe(gulp.dest('dist'));
 });
@@ -79,9 +79,12 @@ gulp.task('pack-with-custom-paths', () => {
   const collect = pack();
   return gulp.src('src/*.js')
   .pipe(collect)
-  .pipe(collect.pack('src/app.js', file => {
-    // This is useful if we have changed files before packing, e.g. concat'ed.
-    return file.relative === 'main.js' ? 'src/app.js' : file.path;
+  .pipe(collect.pack({
+    main: 'src/app.js',
+    getPath(file) {
+      // This is useful if we have changed files before packing, e.g. concat'ed.
+      return file.relative === 'main.js' ? 'src/app.js' : file.path;
+    },
   }))
   .pipe(concat())
   .pipe(gulp.dest('dist'));
