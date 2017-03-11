@@ -31,7 +31,7 @@ function resolveFile(file, options) {
     if (res.isFile()) return file;
     if (res.isDirectory() && options.tryDir) {
       return resolveFile(
-        path.join(file, 'index'),
+        resolvePath(path.join(file, 'index')),
         Object.assign({}, options, {tryDir: false})
       );
     }
